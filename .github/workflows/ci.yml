@@ -12,10 +12,11 @@ jobs:
   code-quality:
     runs-on: ubuntu-latest
     steps:
-      # Checkout code
+      # Checkout code with write permissions
       - uses: actions/checkout@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }} # Required for auto-commit
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0 # Full history for accurate diffs
 
       # Set up PHP
       - uses: shivammathur/setup-php@v2
@@ -36,6 +37,9 @@ jobs:
       - name: Install Dependencies
         if: steps.cache-vendor.outputs.cache-hit != 'true'
         run: composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
+        env:
+          COMPOSER_NO_INTERACTION: 1
+          COMPOSER_NO_AUDIT: 1
 
       # Cache Pint
       - name: Cache Pint
@@ -47,7 +51,7 @@ jobs:
 
       # Run Laravel Pint
       - name: Run Pint
-        run: ./vendor/bin/pint --dirty # Only format changed files
+        run: ./vendor/bin/pint --dirty
 
       # Cache Rector
       - name: Cache Rector
@@ -80,3 +84,13 @@ jobs:
           commit_message: '[CI] Apply Pint and Rector fixes'
           commit_author: 'GitHub Action <actions@github.com>'
           commit_user_email: 'action@github.com'
+          commit_user_name: 'github-actions[bot]'
+          file_pattern: '*.php' # Only commit PHP files
+          skip_dirty_check: false
+          skip_fetch: false
+          skip_checkout: false
+          disable_globbing: false
+          create_branch: false
+        env:
+          COMPOSER_NO_INTERACTION: 1
+          COMPOSER_NO_AUDIT: 1
